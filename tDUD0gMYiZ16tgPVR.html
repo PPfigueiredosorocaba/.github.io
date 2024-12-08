@@ -1,0 +1,297 @@
+<html><head><base href="." />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MathLearn App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            height: 100vh;
+        }
+
+        .app {
+            max-width: 480px;
+            margin: 0 auto;
+            background: white;
+            height: 100vh;
+            position: relative;
+        }
+
+        .header {
+            background: #4CAF50;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #81C784;
+            position: relative;
+        }
+
+        .progress {
+            position: absolute;
+            height: 100%;
+            background: #2E7D32;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .content {
+            padding: 1.5rem;
+        }
+
+        .problem-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .problem {
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .option {
+            background: #E8F5E9;
+            border: 2px solid #81C784;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option:hover {
+            background: #81C784;
+            color: white;
+        }
+
+        .option.correct {
+            background: #4CAF50;
+            color: white;
+            border-color: #2E7D32;
+        }
+
+        .option.wrong {
+            background: #FF5252;
+            color: white;
+            border-color: #D32F2F;
+        }
+
+        .stats {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 1rem;
+            background: white;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .celebrate {
+            animation: bounce 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <h1>MathLearn</h1>
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="problem-card">
+                <div class="problem" id="problem"></div>
+                <div class="options" id="options"></div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="correct">0</div>
+                <div class="stat-label">Corretas</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="streak">0</div>
+                <div class="stat-label">Sequência</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="total">0</div>
+                <div class="stat-label">Total</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class MathGame {
+            constructor() {
+                this.correctCount = 0;
+                this.streak = 0;
+                this.totalProblems = 0;
+                this.currentProblem = null;
+                this.difficulty = 1;
+                
+                this.problemElement = document.getElementById('problem');
+                this.optionsElement = document.getElementById('options');
+                this.progressElement = document.getElementById('progress');
+                this.correctElement = document.getElementById('correct');
+                this.streakElement = document.getElementById('streak');
+                this.totalElement = document.getElementById('total');
+
+                this.generateProblem();
+            }
+
+            generateProblem() {
+                const operations = ['+', '-', '×'];
+                const operation = operations[Math.floor(Math.random() * operations.length)];
+                let num1, num2, answer;
+
+                switch(operation) {
+                    case '+':
+                        num1 = Math.floor(Math.random() * (10 * this.difficulty));
+                        num2 = Math.floor(Math.random() * (10 * this.difficulty));
+                        answer = num1 + num2;
+                        break;
+                    case '-':
+                        num1 = Math.floor(Math.random() * (10 * this.difficulty));
+                        num2 = Math.floor(Math.random() * (num1 + 1));
+                        answer = num1 - num2;
+                        break;
+                    case '×':
+                        num1 = Math.floor(Math.random() * (5 * this.difficulty));
+                        num2 = Math.floor(Math.random() * (5 * this.difficulty));
+                        answer = num1 * num2;
+                        break;
+                }
+
+                this.currentProblem = {
+                    question: `${num1} ${operation} ${num2} = ?`,
+                    answer: answer
+                };
+
+                this.displayProblem();
+            }
+
+            displayProblem() {
+                this.problemElement.textContent = this.currentProblem.question;
+                this.optionsElement.innerHTML = '';
+
+                const correctAnswer = this.currentProblem.answer;
+                const options = this.generateOptions(correctAnswer);
+                
+                options.forEach(option => {
+                    const button = document.createElement('div');
+                    button.className = 'option';
+                    button.textContent = option;
+                    button.addEventListener('click', () => this.checkAnswer(option));
+                    this.optionsElement.appendChild(button);
+                });
+            }
+
+            generateOptions(correctAnswer) {
+                const options = [correctAnswer];
+                while (options.length < 4) {
+                    const offset = Math.floor(Math.random() * 10) - 5;
+                    const option = correctAnswer + offset;
+                    if (!options.includes(option)) {
+                        options.push(option);
+                    }
+                }
+                return this.shuffleArray(options);
+            }
+
+            shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            checkAnswer(selectedAnswer) {
+                const correct = selectedAnswer === this.currentProblem.answer;
+                const options = this.optionsElement.children;
+
+                for (let option of options) {
+                    if (parseInt(option.textContent) === selectedAnswer) {
+                        option.classList.add(correct ? 'correct' : 'wrong');
+                        if (correct) {
+                            option.classList.add('celebrate');
+                        }
+                    }
+                }
+
+                if (correct) {
+                    this.correctCount++;
+                    this.streak++;
+                    if (this.streak % 5 === 0) {
+                        this.difficulty++;
+                    }
+                } else {
+                    this.streak = 0;
+                }
+
+                this.totalProblems++;
+                this.updateStats();
+
+                setTimeout(() => {
+                    this.generateProblem();
+                }, 1000);
+            }
+
+            updateStats() {
+                this.correctElement.textContent = this.correctCount;
+                this.streakElement.textContent = this.streak;
+                this.totalElement.textContent = this.totalProblems;
+                this.progressElement.style.width = `${(this.correctCount / this.totalProblems) * 100}%`;
+            }
+        }
+
+        // Iniciar o jogo
+        const game = new MathGame();
+    </script>
+</body></html>
